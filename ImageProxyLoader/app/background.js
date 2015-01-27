@@ -2,6 +2,7 @@
 var _proxyUrl = '';
 var _urls = '';
 var _enabled = false;
+var _base64Encode = false;
 
 // Constants
 var _domainRegEx = /(.[^:]+):\/\/(.[^/]+)/;
@@ -25,6 +26,8 @@ var settings = {
             _urls = '';
         }
     },
+    get base64Encode() { return _base64Encode; },
+    set base64Encode(val) { _base64Encode = val; },
     get enabled() { return _enabled; },
     set enabled(val) {
         _enabled = val;
@@ -47,10 +50,12 @@ var settings = {
 function loadSettingsFromChromeStorage() {
     chrome.storage.sync.get({
         enabled: false,
+        base64Encode: false,
         proxyUrl: '',
         urls: ''
     }, function (items) {
         settings.proxyUrl = items.proxyUrl;
+        settings.base64Encode = items.base64Encode;
         settings.enabled = items.enabled;
         settings.urls = items.urls;
     });
@@ -75,6 +80,12 @@ function getRedirectInformation(info) {
     var isRedirectedDomain = contains(settings.urls, domain);
 
     if (isRedirectedDomain) {
+        if (settings.base64Encode) {
+            originalUrl = btoa(originalUrl);
+        }
+
+        originalUrl = encodeURIComponent(originalUrl);
+
         var newUrl = settings.proxyUrl.replace('$URL', originalUrl);
 
         return {
